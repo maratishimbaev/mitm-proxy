@@ -2,7 +2,9 @@ package main
 
 import (
 	"io"
+	"net"
 	"net/http"
+	"time"
 )
 
 type Proxy struct {
@@ -21,8 +23,33 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.handleHTTP(w, r)
 }
 
-func (p *Proxy) handleHTTPS(w http.ResponseWriter, r *http.Request) {
+func transfer(destination io.WriteCloser, source io.ReadCloser) {
+	defer destination.Close()
+	defer source.Close()
 
+	_, _ = io.Copy(destination, source)
+}
+
+func (p *Proxy) handleHTTPS(w http.ResponseWriter, r *http.Request) {
+	destinationConn, err := net.DialTimeout("tcp", r.Host, 10*time.Second)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+
+	hijacker, ok := w.(http.Hijacker)
+	if !ok {
+		http.Error(w, "hijacking error", http.StatusInternalServerError)
+		return
+	}
+	sourceConn, _, err := hijacker.Hijack()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+	}
+
+	go transfer(destinationConn, sourceConn)
+	go transfer(sourceConn, destinationConn)
 }
 
 func (p *Proxy) handleHTTP(w http.ResponseWriter, r *http.Request) {
