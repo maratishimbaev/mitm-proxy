@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"mitm-proxy/app/models"
-	"mitm-proxy/app/proxy/delivery/interfaces"
+	"mitm-proxy/app/proxy/interfaces"
 	"net"
 	"net/http"
 	"strings"
@@ -24,10 +24,10 @@ func NewHandler(useCase proxyInterfaces.ProxyUseCase) *handler {
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodConnect {
-		h.handleHTTPS(w, r)
+		h.handleHttps(w, r)
 		return
 	}
-	h.handleHTTP(w, r)
+	h.handleHttp(w, r)
 }
 
 func transfer(destination io.WriteCloser, source io.ReadCloser) {
@@ -37,7 +37,7 @@ func transfer(destination io.WriteCloser, source io.ReadCloser) {
 	_, _ = io.Copy(destination, source)
 }
 
-func (h *handler) handleHTTPS(w http.ResponseWriter, r *http.Request) {
+func (h *handler) handleHttps(w http.ResponseWriter, r *http.Request) {
 	host := strings.Split(r.Host, ":")
 	head := fmt.Sprintf("%s", r.Method)
 	body, _ := ioutil.ReadAll(r.Body)
@@ -77,7 +77,7 @@ func (h *handler) handleHTTPS(w http.ResponseWriter, r *http.Request) {
 	go transfer(sourceConn, destinationConn)
 }
 
-func (h *handler) handleHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *handler) handleHttp(w http.ResponseWriter, r *http.Request) {
 	res, err := http.DefaultTransport.RoundTrip(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)

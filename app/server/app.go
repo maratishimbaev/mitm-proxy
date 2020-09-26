@@ -6,9 +6,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	proxyHttp "mitm-proxy/app/proxy/delivery/http"
-	proxyInterfaces "mitm-proxy/app/proxy/delivery/interfaces"
-	proxyMongo "mitm-proxy/app/proxy/delivery/repository/mongo"
-	proxyUsecase "mitm-proxy/app/proxy/delivery/usecase"
+	proxyInterfaces "mitm-proxy/app/proxy/interfaces"
+	proxyMongo "mitm-proxy/app/proxy/repository/mongo"
+	proxyUsecase "mitm-proxy/app/proxy/usecase"
 	"net/http"
 )
 

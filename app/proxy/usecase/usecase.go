@@ -2,7 +2,7 @@ package proxyUsecase
 
 import (
 	"mitm-proxy/app/models"
-	proxyInterfaces "mitm-proxy/app/proxy/delivery/interfaces"
+	proxyInterfaces "mitm-proxy/app/proxy/interfaces"
 )
 
 type proxyUseCase struct {
