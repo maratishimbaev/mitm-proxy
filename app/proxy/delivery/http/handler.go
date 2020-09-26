@@ -1,35 +1,33 @@
-package main
+package proxyHttp
 
 import (
-	"context"
 	"fmt"
 	"github.com/kataras/golog"
-	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"io/ioutil"
+	"mitm-proxy/app/models"
+	"mitm-proxy/app/proxy/delivery/interfaces"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 )
 
-type Proxy struct {
+type handler struct {
 	http.Handler
-	col *mongo.Collection
+	useCase proxyInterfaces.ProxyUseCase
 }
 
-func NewProxy(col *mongo.Collection) *Proxy {
-	return &Proxy{
-		col: col,
-	}
+func NewHandler(useCase proxyInterfaces.ProxyUseCase) *handler {
+	return &handler{useCase: useCase}
 }
 
-func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodConnect {
-		p.handleHTTPS(w, r)
+		h.handleHTTPS(w, r)
 		return
 	}
-	p.handleHTTP(w, r)
+	h.handleHTTP(w, r)
 }
 
 func transfer(destination io.WriteCloser, source io.ReadCloser) {
@@ -39,21 +37,21 @@ func transfer(destination io.WriteCloser, source io.ReadCloser) {
 	_, _ = io.Copy(destination, source)
 }
 
-func (p *Proxy) handleHTTPS(w http.ResponseWriter, r *http.Request) {
+func (h *handler) handleHTTPS(w http.ResponseWriter, r *http.Request) {
 	host := strings.Split(r.Host, ":")
 	head := fmt.Sprintf("%s", r.Method)
 	body, _ := ioutil.ReadAll(r.Body)
 
-	request := NewRequest(
-		host[0],
-		host[1],
-		true,
-		head,
-		string(body),
-	)
+	request := models.Request{
+		Host:  host[0],
+		Port:  host[1],
+		IsSSL: true,
+		Head:  head,
+		Body:  string(body),
+	}
 	golog.Infof("request: %s", request)
 
-	_, err := p.col.InsertOne(context.TODO(), request)
+	err := h.useCase.CreateRequest(&request)
 	if err != nil {
 		golog.Error(err.Error())
 	}
@@ -79,7 +77,7 @@ func (p *Proxy) handleHTTPS(w http.ResponseWriter, r *http.Request) {
 	go transfer(sourceConn, destinationConn)
 }
 
-func (p *Proxy) handleHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *handler) handleHTTP(w http.ResponseWriter, r *http.Request) {
 	res, err := http.DefaultTransport.RoundTrip(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
