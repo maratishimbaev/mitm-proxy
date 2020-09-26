@@ -1,18 +1,27 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"github.com/kataras/golog"
+	"go.mongodb.org/mongo-driver/mongo"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
 type Proxy struct {
 	http.Handler
+	col *mongo.Collection
 }
 
-func NewProxy() *Proxy {
-	return &Proxy{}
+func NewProxy(col *mongo.Collection) *Proxy {
+	return &Proxy{
+		col: col,
+	}
 }
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -31,6 +40,24 @@ func transfer(destination io.WriteCloser, source io.ReadCloser) {
 }
 
 func (p *Proxy) handleHTTPS(w http.ResponseWriter, r *http.Request) {
+	host := strings.Split(r.Host, ":")
+	head := fmt.Sprintf("%s", r.Method)
+	body, _ := ioutil.ReadAll(r.Body)
+
+	request := NewRequest(
+		host[0],
+		host[1],
+		true,
+		head,
+		string(body),
+	)
+	golog.Infof("request: %s", request)
+
+	_, err := p.col.InsertOne(context.TODO(), request)
+	if err != nil {
+		golog.Error(err.Error())
+	}
+
 	destinationConn, err := net.DialTimeout("tcp", r.Host, 10*time.Second)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
