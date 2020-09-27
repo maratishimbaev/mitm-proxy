@@ -18,8 +18,6 @@ func NewProxyRepository(collection *mongo.Collection) *proxyRepository {
 }
 
 func (r *proxyRepository) CreateRequest(request *models.Request) (err error) {
-	golog.Info(request)
-
 	_, err = r.collection.InsertOne(context.TODO(), request)
 
 	return err
@@ -54,4 +52,16 @@ func (r *proxyRepository) GetRequests() (requests []models.Request, err error) {
 	cur.Close(context.TODO())
 
 	return requests, nil
+}
+
+func (r *proxyRepository) GetRequest(id uint64) (request *models.Request, err error) {
+	filter := bson.D{{"id", id}}
+
+	err = r.collection.FindOne(context.TODO(), filter).Decode(&request)
+	if err != nil {
+		golog.Error(err.Error())
+		return nil, err
+	}
+
+	return request, nil
 }

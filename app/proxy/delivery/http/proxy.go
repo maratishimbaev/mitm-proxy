@@ -21,9 +21,11 @@ func NewHandler(useCase proxyInterfaces.ProxyUseCase) *handler {
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodConnect {
+		golog.Infof("https: %s %s", r.Method, r.RequestURI)
 		h.handleHttps(w, r)
 		return
 	}
+	golog.Infof("http: %s %s", r.Method, r.RequestURI)
 	h.handleHttp(w, r)
 }
 

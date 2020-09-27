@@ -1,12 +1,8 @@
-db.createUser(
-    {
-        user: "mongo",
-        pwd: "mongo",
-        roles: [
-            {
-                role: "readWrite",
-                db: "requests"
-            }
-        ]
-    }
-)
+db.createUser({
+  user: "mongo",
+  pwd: "mongo",
+  roles: [{
+    role: "readWrite",
+    db: "requests"
+  }]
+})

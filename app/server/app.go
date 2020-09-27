@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gorilla/mux"
 	"github.com/kataras/golog"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	proxyHttp "mitm-proxy/app/proxy/delivery/http"
@@ -37,6 +38,7 @@ func (a *app) Start() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/requests", h.GetRequests).Methods("GET")
+	router.HandleFunc("/requests/{id:[0-9]}", h.RepeatRequest).Methods("GET")
 
 	http.Handle("/", router)
 
@@ -61,5 +63,7 @@ func initDatabase() *mongo.Collection {
 		return nil
 	}
 
-	return client.Database("mitm-proxy").Collection("requests")
+	collection := client.Database("mitm-proxy").Collection("requests")
+	_, _ = collection.DeleteMany(context.TODO(), bson.D{})
+	return collection
 }
