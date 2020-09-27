@@ -4,4 +4,5 @@ import "mitm-proxy/app/models"
 
 type ProxyUseCase interface {
 	CreateRequest(request *models.Request) (err error)
+	GetRequests() (requests []models.Request, err error)
 }

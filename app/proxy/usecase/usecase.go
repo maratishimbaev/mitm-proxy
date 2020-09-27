@@ -16,3 +16,7 @@ func NewProxyUseCase(repository proxyInterfaces.ProxyRepository) *proxyUseCase {
 func (u *proxyUseCase) CreateRequest(request *models.Request) (err error) {
 	return u.repository.CreateRequest(request)
 }
+
+func (u *proxyUseCase) GetRequests() (requests []models.Request, err error) {
+	return u.repository.GetRequests()
+}

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/gorilla/mux"
 	"github.com/kataras/golog"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -29,8 +30,21 @@ func NewApp() *app {
 func (a *app) Start() {
 	h := proxyHttp.NewHandler(a.proxyUseCase)
 
-	golog.Info("Server started")
-	golog.Fatal(http.ListenAndServe(":8000", h))
+	go func() {
+		golog.Info("Proxy server started")
+		golog.Fatal(http.ListenAndServe(":8000", h))
+	}()
+
+	router := mux.NewRouter()
+	router.HandleFunc("/requests", h.GetRequests).Methods("GET")
+
+	http.Handle("/", router)
+
+	golog.Info("Repeater server started")
+	err := http.ListenAndServe(":8001", nil)
+	if err != nil {
+		golog.Error("Repeater server failed: ", err.Error())
+	}
 }
 
 func initDatabase() *mongo.Collection {
