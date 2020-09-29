@@ -16,3 +16,9 @@
 
 # IDE files
 .idea/
+
+# Cert files
+certs/
+ca.crt
+ca.key
+cert.key

@@ -10,6 +10,7 @@ import (
 type Request struct {
 	Id       uint64 `json:"id"`
 	Method   string `json:"method"`
+	Host     string `json:"host"`
 	Path     string `json:"path"`
 	Protocol string `json:"protocol"`
 	Headers  string `json:"headers"`
@@ -24,7 +25,8 @@ func FromHttpRequest(r *http.Request) *Request {
 
 	return &Request{
 		Method:   r.Method,
-		Path:     r.RequestURI,
+		Host:     r.URL.Host,
+		Path:     r.URL.Path,
 		Protocol: r.Proto,
 		Headers:  string(headersJson),
 		Body:     body.String(),
@@ -38,8 +40,10 @@ func ToHttpRequest(r *Request) *http.Request {
 	}
 
 	request.Proto = r.Protocol
-	request.RequestURI = r.Path
-	request.Host = r.Path
+	request.URL.Path = r.Path
+
+	request.URL.Host = r.Host
+	request.Host = r.Host
 
 	var headers http.Header
 	_ = json.Unmarshal([]byte(r.Headers), &headers)

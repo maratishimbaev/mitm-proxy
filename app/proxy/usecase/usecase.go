@@ -8,7 +8,7 @@ import (
 
 type proxyUseCase struct {
 	repository proxyInterfaces.ProxyRepository
-	id uint64
+	id         uint64
 }
 
 func NewProxyUseCase(repository proxyInterfaces.ProxyRepository) *proxyUseCase {
