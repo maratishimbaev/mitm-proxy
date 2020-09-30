@@ -32,17 +32,18 @@ func (a *app) Start() {
 	h := proxyHttp.NewHandler(a.proxyUseCase)
 
 	go func() {
-		golog.Info("Proxy server started")
+		golog.Info("Proxy server started at port 8000")
 		golog.Fatal(http.ListenAndServe(":8000", h))
 	}()
 
 	router := mux.NewRouter()
 	router.HandleFunc("/requests", h.GetRequests).Methods("GET")
-	router.HandleFunc("/requests/{id:[0-9]}", h.RepeatRequest).Methods("GET")
+	router.HandleFunc("/requests/{id:[0-9]+}", h.RepeatRequest).Methods("GET")
+	router.HandleFunc("/requests/{id:[0-9]+}/check", h.CheckXXE).Methods("GET")
 
 	http.Handle("/", router)
 
-	golog.Info("Repeater server started")
+	golog.Info("Repeater server started at port 8001")
 	err := http.ListenAndServe(":8001", nil)
 	if err != nil {
 		golog.Error("Repeater server failed: ", err.Error())

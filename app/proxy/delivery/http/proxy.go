@@ -28,6 +28,10 @@ func NewHandler(useCase proxyInterfaces.ProxyUseCase) *handler {
 
 func (h *handler) Wrap(upstream http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Scheme == "" {
+			r.URL.Scheme = "https"
+		}
+
 		request := models.FromHttpRequest(r)
 
 		golog.Infof("#%d %s %s%s", request.Id, request.Method, request.Host, request.Path)
@@ -54,6 +58,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		},
 		FlushInterval: h.FlushInterval,
 	}
+	r.URL.Host = "http"
 	h.Wrap(rp).ServeHTTP(w, r)
 }
 
@@ -112,7 +117,7 @@ func (h *handler) handleHttps(w http.ResponseWriter, r *http.Request) {
 			r.URL.Scheme = "https"
 		},
 		Transport:     &http.Transport{DialTLS: dialer.Dial},
-		//FlushInterval: h.FlushInterval,
+		FlushInterval: h.FlushInterval,
 	}
 
 	ch := make(chan int)

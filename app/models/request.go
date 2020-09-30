@@ -3,6 +3,7 @@ package models
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/kataras/golog"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -31,19 +32,21 @@ func FromHttpRequest(r *http.Request) *Request {
 		Method:   r.Method,
 		Host:     r.Host,
 		Path:     r.URL.Path,
-		Protocol: r.Proto,
+		Protocol: r.URL.Scheme,
 		Headers:  string(headersJson),
 		Body:     body.String(),
 	}
 }
 
 func ToHttpRequest(r *Request) *http.Request {
-	request, err := http.NewRequest(r.Method, r.Path, strings.NewReader(r.Body))
+	url := r.Protocol + "://" + r.Host + r.Path
+	request, err := http.NewRequest(r.Method, url, strings.NewReader(r.Body))
 	if err != nil {
+		golog.Error(err.Error())
 		return nil
 	}
 
-	request.Proto = r.Protocol
+	request.URL.Scheme = r.Protocol
 	request.URL.Path = r.Path
 
 	request.URL.Host = r.Host
