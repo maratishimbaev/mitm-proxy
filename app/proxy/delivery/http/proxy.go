@@ -30,8 +30,7 @@ func (h *handler) Wrap(upstream http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		request := models.FromHttpRequest(r)
 
-		//golog.Infof("%s %s%s", request.Method, request.Host, request.Path)
-		golog.Info(request)
+		golog.Infof("#%d %s %s%s", request.Id, request.Method, request.Host, request.Path)
 
 		err := h.useCase.CreateRequest(request)
 		if err != nil {
@@ -61,14 +60,14 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *handler) handleHttps(w http.ResponseWriter, r *http.Request) {
 	hostName, _, err := net.SplitHostPort(r.Host)
 	if err != nil {
-		golog.Error(err.Error())
+		golog.Errorf("no host: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
 		return
 	}
 
 	cert, err := certificate.GetCert(hostName)
 	if err != nil {
-		golog.Error(err.Error())
+		golog.Errorf("get cert err: %s", err.Error())
 		http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
 		return
 	}
@@ -88,7 +87,7 @@ func (h *handler) handleHttps(w http.ResponseWriter, r *http.Request) {
 		clientConfig.ServerName = hello.ServerName
 		serverConn, err = tls.Dial("tcp", r.Host, clientConfig)
 		if err != nil {
-			golog.Error(err.Error())
+			golog.Errorf("dial tcp err: %s", err.Error())
 			return nil, err
 		}
 		return certificate.GetCert(hostName)
@@ -96,12 +95,12 @@ func (h *handler) handleHttps(w http.ResponseWriter, r *http.Request) {
 
 	clientConn, err := handshake(w, serverConfig)
 	if err != nil {
-		golog.Error(err.Error())
+		golog.Errorf("handshake err: %s", err.Error())
 		return
 	}
 	defer clientConn.Close()
 	if serverConn == nil {
-		golog.Error(err.Error())
+		golog.Error("client conn is nil")
 		return
 	}
 	defer serverConn.Close()
@@ -113,7 +112,7 @@ func (h *handler) handleHttps(w http.ResponseWriter, r *http.Request) {
 			r.URL.Scheme = "https"
 		},
 		Transport:     &http.Transport{DialTLS: dialer.Dial},
-		FlushInterval: h.FlushInterval,
+		//FlushInterval: h.FlushInterval,
 	}
 
 	ch := make(chan int)

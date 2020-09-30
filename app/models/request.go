@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"sync/atomic"
 )
+
+var id uint64
 
 type Request struct {
 	Id       uint64 `json:"id"`
@@ -24,8 +27,9 @@ func FromHttpRequest(r *http.Request) *Request {
 	_, _ = body.ReadFrom(r.Body)
 
 	return &Request{
+		Id:       atomic.AddUint64(&id, 1),
 		Method:   r.Method,
-		Host:     r.URL.Host,
+		Host:     r.Host,
 		Path:     r.URL.Path,
 		Protocol: r.Proto,
 		Headers:  string(headersJson),
