@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/kataras/golog"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -24,8 +25,8 @@ type Request struct {
 func FromHttpRequest(r *http.Request) *Request {
 	headersJson, _ := json.Marshal(r.Header)
 
-	body := new(bytes.Buffer)
-	_, _ = body.ReadFrom(r.Body)
+	body, _ := ioutil.ReadAll(r.Body)
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
 	return &Request{
 		Id:       atomic.AddUint64(&id, 1),
@@ -34,7 +35,7 @@ func FromHttpRequest(r *http.Request) *Request {
 		Path:     r.URL.Path,
 		Protocol: r.URL.Scheme,
 		Headers:  string(headersJson),
-		Body:     body.String(),
+		Body:     string(body),
 	}
 }
 

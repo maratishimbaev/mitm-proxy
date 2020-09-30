@@ -135,7 +135,7 @@ func CreateKeyPair(commonName string) (certFile, keyFile string, err error) {
 	defer keyOut.Close()
 
 	if err := pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
-		return "", "", nil
+		return "", "", err
 	}
 
 	return certFile, keyFile, nil

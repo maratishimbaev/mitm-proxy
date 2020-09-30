@@ -58,7 +58,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		},
 		FlushInterval: h.FlushInterval,
 	}
-	r.URL.Host = "http"
+	r.URL.Scheme = "http"
 	h.Wrap(rp).ServeHTTP(w, r)
 }
 
@@ -95,17 +95,16 @@ func (h *handler) handleHttps(w http.ResponseWriter, r *http.Request) {
 			golog.Errorf("dial tcp err: %s", err.Error())
 			return nil, err
 		}
-		return certificate.GetCert(hostName)
+		return certificate.GetCert(hello.ServerName)
 	}
 
 	clientConn, err := handshake(w, serverConfig)
 	if err != nil {
-		golog.Errorf("handshake err: %s", err.Error())
 		return
 	}
 	defer clientConn.Close()
 	if serverConn == nil {
-		golog.Error("client conn is nil")
+		golog.Error("server conn is nil")
 		return
 	}
 	defer serverConn.Close()

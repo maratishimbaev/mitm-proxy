@@ -93,7 +93,7 @@ func (h *handler) CheckXXE(w http.ResponseWriter, r *http.Request) {
 
 	var bodyJson []byte
 	type XXE struct {
-		XXE bool
+		XXE bool `json:"xxe"`
 	}
 	if strings.Contains(string(body), "root:") {
 		bodyJson, _ = json.Marshal(XXE{true})
